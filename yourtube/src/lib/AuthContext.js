@@ -60,8 +60,17 @@ export const UserProvider = ({children}) => {
         return () => unsubscribe();
     },[]);
     
+    const refreshUser = async (userId) => {
+        try {
+            const response = await axiosInstance.get(`/user/${userId}`);
+            login(response.data.result);
+        } catch (error) {
+            console.error("Failed to refresh user:", error);
+        }
+    };
+
     return (
-        <UserContext.Provider value={{user,login,logout,handlegooglesignin}}>  
+        <UserContext.Provider value={{user,login,logout,handlegooglesignin,refreshUser}}>
             {children}
         </UserContext.Provider>
     )

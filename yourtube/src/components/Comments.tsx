@@ -5,6 +5,8 @@ import { Button } from './ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { useUser } from '@/lib/AuthContext';
 import axiosInstance from '@/lib/axiosinstance';
+import { ThumbsDown, ThumbsUp } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Comment {
     _id: string;
@@ -24,25 +26,6 @@ const Comments = ({ videoId }: any) => {
   const [loading, setLoading] = useState(true);
 
   const { user } = useUser()
-
-  const fetchedComments = [
-    {
-      _id: "1",
-      videoid: videoId,
-      userid: "1",
-      commentbody: "Great video! Really enjoyed watching this.",
-      usercommented: "John Doe",
-      commentedon: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      _id: "2",
-      videoid: videoId,
-      userid: "2",
-      commentbody: "Thanks for sharing this amazing content!",
-      usercommented: "Jane Smith",
-      commentedon: new Date(Date.now() - 7200000).toISOString(),
-    },
-  ];
 
     useEffect(()=>{
         loadComments();
@@ -75,18 +58,14 @@ const Comments = ({ videoId }: any) => {
                 usercommented: user.name,
             });
             if(res.data.comment){
-                const newCommentObj: Comment = { 
-                    _id: Date.now().toString(),
-                    videoid: videoId,
-                    userid: user._id,
-                    commentbody: newComment,
-                    usercommented: user.name || "Anonymous",
-                    commentedon: new Date().toISOString(),
-                };
-                setComments([newCommentObj, ...comments]);
+                setComments((prev:any)=>[
+                    res.data.comment,
+                    ...prev
+                ]);
             }
             setNewComment("");
-        } catch (error) {
+        } catch (error:any) {
+            toast.error(error.response?.data?.message);
             console.error("Error adding comment:", error);
         } finally {
             setIsSubmitting(false);
@@ -129,12 +108,12 @@ const Comments = ({ videoId }: any) => {
 
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold">{comments.length} Comments</h2>
+    <div className="space-y-4 sm:space-y-6 min-w-0">
+      <h2 className="text-lg sm:text-xl font-semibold">{comments.length} Comments</h2>
 
         {user && (
-            <div className="flex gap-4">
-                <Avatar className="w-10 h-10">
+            <div className="flex gap-3 sm:gap-4">
+                <Avatar className="w-8 h-8 sm:w-10 sm:h-10 shrink-0">
                     <AvatarImage src={user.image} alt={user.name} />
                     <AvatarFallback>{user.name[0]}</AvatarFallback>
                 </Avatar>
@@ -159,8 +138,8 @@ const Comments = ({ videoId }: any) => {
                 </p>
             ) : (
                 comments.map((comment)=>(
-                <div key={comment._id} className='flex gap-4'>
-                    <Avatar className='w-10 h-10'>
+                <div key={comment._id} className='flex gap-3 sm:gap-4 min-w-0'>
+                    <Avatar className='w-8 h-8 sm:w-10 sm:h-10 shrink-0'>
                         <AvatarImage src="/placeholder.svg?height=40&width=10" />
                         <AvatarFallback>{comment.usercommented[0]}</AvatarFallback>
                     </Avatar>
@@ -185,7 +164,7 @@ const Comments = ({ videoId }: any) => {
                                 <p className='text-sm'>{comment.commentbody}</p>
                                 {comment.userid === user?._id && (
                                     <div className="flex gap-2 mt-2 text-sm text-gray-500">
-                                        <Button variant="ghost"
+                                        <Button variant="ghost" 
                                             className="p-0 h-auto bg-transparent hover:bg-transparent shadow-none"
                                             onClick={()=>handleEdit(comment)}
                                         >Edit</Button>

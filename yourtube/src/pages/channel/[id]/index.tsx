@@ -2,69 +2,81 @@ import ChannelHeader from '@/components/ChannelHeader';
 import ChannelTabs from '@/components/ChannelTabs';
 import ChannelVideos from '@/components/ChannelVideos';
 import VideoUploader from '@/components/VideoUploader';
+import axiosInstance from '@/lib/axiosinstance';
 import { useUser } from '@/lib/AuthContext';
 import { useRouter } from 'next/router';
-import React from 'react'
+import React, { useCallback, useEffect, useState } from 'react';
 
 const index = () => {
     const router = useRouter();
-    const {id} = router.query;
+    const { id } = router.query;
+    const channelId = Array.isArray(id) ? id[0] : id;
     const { user } = useUser();
-    // const user:any = {
-    //     id: 1,
-    //     name: "John Doe",
-    //     email: "john@example.com",
-    //     image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTETU6oOlq2-7Sm_KLEf-N__TGnd7sIyKuz1w&s"
-    // };
-    try{
-        let channel = user
-   
-        const videos = [
-            {
-                _id: "1",
-                videotitle: "Amazing Nature Documentary",
-                filename: "nature-doc.mp4",
-                filetype: "video/mp4",
-                filepath: "/videos/nature-doc.mp4",
-                filesize: "500MB",
-                videochanel: "Nature Channel",
-                Like: 1250,
-                views: 45000,
-                uploader: "nature_lover",
-                createdAt: new Date().toISOString(),
-            },
-            {
-                _id: "2",
-                videotitle: "Cooking Tutorial: Perfect Pasta",
-                filename: "pasta-tutorial.mp4",
-                filetype: "video/mp4",
-                filepath: "/videos/pasta-tutorial.mp4",
-                filesize: "300MB",
-                videochanel: "Chef's Kitchen",
-                Like: 890,
-                views: 23000,
-                uploader: "chef_master",
-                createdAt: new Date(Date.now() - 86400000).toISOString(),
-            },
-        ];
+    const [channel, setChannel] = useState<any>(null);
+    const [videos, setVideos] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
+    const fetchChannelData = useCallback(async (isRefresh = false) => {
+        if (!channelId || typeof channelId !== 'string') return;
+
+        if (!isRefresh) setLoading(true);
+        try {
+            const [userRes, videosRes] = await Promise.all([
+                axiosInstance.get(`/user/${channelId}`),
+                axiosInstance.get(`/video/channel/${channelId}`),
+            ]);
+            setChannel(userRes.data.result);
+            setVideos(videosRes.data || []);
+        } catch (error) {
+            console.error('Error fetching channel data:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [channelId]);
+
+    useEffect(() => {
+        fetchChannelData();
+    }, [fetchChannelData]);
+
+    const isOwnChannel =
+        !!user?._id && !!channelId && String(user._id) === String(channelId);
+
+    if (loading) {
         return (
-            <div className="flex-1 min-h-screen bg-white">
-                <div className="max-w-full mx-auto">
-                    <ChannelHeader channel={channel} user={user} />
-                    <ChannelTabs />
-                    <div className='px-4 pb-8'>
-                        <VideoUploader channelId={id} channelName={channel?.channelname} />
+            <div className="flex-1 min-h-screen bg-white flex items-center justify-center p-4">
+                <p className="text-gray-600">Loading channel...</p>
+            </div>
+        );
+    }
+
+    if (!channel) {
+        return (
+            <div className="flex-1 min-h-screen bg-white flex items-center justify-center p-4">
+                <p className="text-gray-600">Channel not found.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex-1 min-h-screen bg-white min-w-0">
+            <div className="max-w-full mx-auto">
+                <ChannelHeader channel={channel} user={user} />
+                <ChannelTabs />
+                {isOwnChannel && (
+                    <div className="px-3 sm:px-4 pb-6 sm:pb-8">
+                        <VideoUploader
+                            channelId={channelId}
+                            channelName={channel?.channelname}
+                            onUploadSuccess={() => fetchChannelData(true)}
+                        />
                     </div>
-                    <div className="px-4 pb-8">
-                        <ChannelVideos videos={videos} />
-                    </div>
+                )}
+                <div className="px-4 pb-8">
+                    <ChannelVideos videos={videos} />
                 </div>
             </div>
-        )
-    }catch(error){
-        console.error("Error fetching channel date:",error);
-    }
+        </div>
+    );
 };
 
-export default index
+export default index;

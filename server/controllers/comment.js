@@ -2,11 +2,12 @@ import comment from "../Modals/comment.js"
 import mongoose from "mongoose"
 
 export const postcomment = async (req,res) => {
+
     const commentdata = req.body;
     const postcomment = new comment(commentdata);
     try {
-        await postcomment.save()
-        return res.status(200).json({comment:true})
+        await postcomment.save();
+        return res.status(200).json({ comment: true });
     } catch (error) {
         console.log(error)
         return res.status(500).json({message: "Something went wrong"});

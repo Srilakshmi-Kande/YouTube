@@ -6,8 +6,10 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Progress } from './ui/progress';
 import axiosInstance from '@/lib/axiosinstance';
+import { useUser } from '@/lib/AuthContext';
 
-const VideoUploader = ({channelId,channelName}:any) => {
+const VideoUploader = ({channelId,channelName,onUploadSuccess}:any) => {
+    const { user } = useUser();
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -57,11 +59,23 @@ const VideoUploader = ({channelId,channelName}:any) => {
             toast.error("Please provide file and title");
             return;
         }
+        const uploaderId = user?._id || channelId;
+        const channelTitle = channelName || user?.channelname;
+
+        if (!uploaderId) {
+            toast.error("Channel not ready. Please refresh and try again.");
+            return;
+        }
+        if (!channelTitle) {
+            toast.error("Create a channel before uploading videos.");
+            return;
+        }
+
         const formdata = new FormData()
         formdata.append("file",videoFile)
         formdata.append("videotitle",videoTitle)
-        formdata.append("videochanel",channelName)
-        formdata.append("uploader",channelId)
+        formdata.append("videochanel",channelTitle)
+        formdata.append("uploader",String(uploaderId))
         console.log(formdata)
         try{
             setIsUploading(true)
@@ -79,6 +93,7 @@ const VideoUploader = ({channelId,channelName}:any) => {
             });
             toast.success("Video uploaded successfully!");
             resetForm();
+            onUploadSuccess?.();
         }catch(error){
             console.log(error);
             toast.error("Failed to upload video. Please try again.")
@@ -88,12 +103,12 @@ const VideoUploader = ({channelId,channelName}:any) => {
     }
 
   return (
-    <div className='bg-gray-50 rounded-lg p-6'>
-      <h2 className='text-xl font-semibold mb-4'>Upload a video</h2>
+    <div className='bg-gray-50 rounded-lg p-4 sm:p-6'>
+      <h2 className='text-lg sm:text-xl font-semibold mb-3 sm:mb-4'>Upload a video</h2>
       <div className='space-y-4'>
         {!videoFile ? (
             <div 
-                className='border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-100 transition-colors'
+                className='border-2 border-dashed border-gray-300 rounded-lg p-5 sm:p-8 text-center cursor-pointer hover:bg-gray-100 transition-colors'
                 onClick={()=>fileInputRef.current?.click()}
             >
                 <Upload className='w-12 h-12 mx-auto text-gray-400 mb-2' />

@@ -4,8 +4,9 @@ import Videocard from './Videocard';
 const ChannelVideos = ({videos}:any) => {
     if(videos.length === 0){
         return (
-            <div className="text-center py-12">
-                <p className="text-gray-600">No videos uploaded yet.</p>
+            <div className="text-center py-16 border border-dashed rounded-lg">
+                <p className="font-medium text-gray-900">No videos yet</p>
+                <p className="text-sm text-gray-600 mt-1">Videos you upload will appear here.</p>
             </div>
         );
     }

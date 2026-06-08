@@ -1,26 +1,50 @@
-import { formatDistanceToNow } from 'date-fns';
-import Link from 'next/link'
-import React from 'react'
+import { formatDistanceToNow } from "date-fns";
+import Link from "next/link";
+import React from "react";
+import VideoThumbnail from "./VideoThumbnail";
+import { formatViewCount } from "@/lib/video";
 
-const vid = "/video/vdo.mp4";
+const Relatedvideos = ({ videos, currentVideoId }: any) => {
+  const related =
+    videos?.filter((video: any) => video._id !== currentVideoId) ?? [];
 
-const Relatedvideos = ({videos}:any) => {
+  if (!related.length) {
+    return <p className="text-sm text-gray-600">No related videos yet.</p>;
+  }
+
   return (
-    <div className='space-y-2'>
-      {videos.map((video:any)=>{
-        return <Link key={video._id} href={`/watch/${video._id}`} className='flex gap-2 group'>
-            <div className='relative w-40 aspect-video bg-gray-100 rounded overflow-hidden flex-shrink-0'>
-                <video src={vid} className='object-cover group-hover:scale-105 transition-transform duration-200' />
+    <div className="space-y-3">
+      {related.map((video: any) => {
+        const createdAt = video.createdAt ? new Date(video.createdAt) : null;
+        const timeAgo =
+          createdAt && !Number.isNaN(createdAt.getTime())
+            ? `${formatDistanceToNow(createdAt)} ago`
+            : "Recently";
+
+        return (
+          <Link
+            key={video._id}
+            href={`/watch/${video._id}`}
+            className="flex gap-3 group"
+          >
+            <VideoThumbnail
+              filepath={video.filepath}
+              className="w-36 sm:w-40 aspect-video rounded-lg shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-sm line-clamp-2 group-hover:text-red-600">
+                {video.videotitle}
+              </h3>
+              <p className="text-xs text-gray-600 mt-1">{video.videochanel}</p>
+              <p className="text-xs text-gray-600">
+                {formatViewCount(video.views)} • {timeAgo}
+              </p>
             </div>
-            <div className='flex-1 min-w-0'>
-                <h3 className='font-medium text-sm line-clamp-2 group-hover:text-blue-600'>{video.videotitle}</h3>
-                <p className='text-xs text-gray-600 mt-1'>{video.videochanel}</p>
-                <p className='text-xs text-gray-600'>{video.views.toLocaleString()} views •{" "} {formatDistanceToNow(new Date(video.createdAt))} ago</p>
-            </div>
-        </Link>
+          </Link>
+        );
       })}
     </div>
-  )
-}
+  );
+};
 
-export default Relatedvideos
+export default Relatedvideos;

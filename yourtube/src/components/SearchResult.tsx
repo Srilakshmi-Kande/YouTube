@@ -81,9 +81,9 @@ const SearchResult = ({query}:any) => {
         <div className='space-y-4'>
             {
                 video.map((video: any) => {
-                    return <div key={video._id} className='flex gap-4 group'>
-                        <Link href={`/watch/${video._id}`} className='flex-shrink-0'>
-                            <div className="relative w-80 aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    return <div key={video._id} className='flex flex-col sm:flex-row gap-3 sm:gap-4 group'>
+                        <Link href={`/watch/${video._id}`} className='shrink-0 w-full sm:w-72 md:w-80'>
+                            <div className="relative w-full aspect-video bg-gray-100 rounded-lg overflow-hidden">
                                 <video
                                     src={vids}
                                     className="object-cover group-hover:scale-105 transition-transform duration-200"
@@ -95,7 +95,7 @@ const SearchResult = ({query}:any) => {
                         </Link>
                         <div className="flex-1 min-w-0 py-1">
                             <Link href={`/watch/${video._id}`}>
-                            <h3 className="font-medium text-lg line-clamp-2 group-hover:text-blue-600 mb-2">
+                            <h3 className="font-medium text-base sm:text-lg line-clamp-2 group-hover:text-red-600 mb-2">
                                 {video.videotitle}
                             </h3>
                             </Link>

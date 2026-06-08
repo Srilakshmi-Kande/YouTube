@@ -4,21 +4,23 @@ import "@/styles/globals.css";
 import type { AppProps } from "next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "../lib/AuthContext";
+import { LayoutProvider } from "../lib/LayoutContext";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <UserProvider>
-
-    <div className="min-h-screen bg-white text-black">
-      <title>Your-Tube Clone</title>
-      <Header />
-      <Toaster />
-      <div className="flex">
-        <Sidebar />
-        <Component {...pageProps} />
-      </div>
-    </div> 
-
+      <LayoutProvider>
+        <div className="min-h-screen bg-white text-black overflow-x-hidden">
+          <Header />
+          <Toaster />
+          <div className="flex min-h-[calc(100dvh-3.5rem)]">
+            <Sidebar />
+            <div className="flex-1 min-w-0">
+              <Component {...pageProps} />
+            </div>
+          </div>
+        </div>
+      </LayoutProvider>
     </UserProvider>
-  )
+  );
 }

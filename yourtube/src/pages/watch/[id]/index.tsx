@@ -1,91 +1,91 @@
-import Comments from '@/components/Comments';
-import Relatedvideos from '@/components/Relatedvideos';
-import Videoinfo from '@/components/Videoinfo';
-import Videoplayer from '@/components/Videoplayer';
-import axiosInstance from '@/lib/axiosinstance';
-import { useRouter } from 'next/router'
-import { useEffect, useMemo, useState } from 'react'
-import React from 'react'
+import Comments from "@/components/Comments";
+import Relatedvideos from "@/components/Relatedvideos";
+import Videoinfo from "@/components/Videoinfo";
+import Videoplayer from "@/components/Videoplayer";
+import axiosInstance from "@/lib/axiosinstance";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import React from "react";
 
-const index = () => {
-    const router = useRouter();
-    const {id} = router.query;
-    const [videos, setvideo] = useState<any>(null);
-    const [video, setvide] = useState<any>(null);
-    const [loading, setloading] = useState(true);
+const WatchPage = () => {
+  const router = useRouter();
+  const { id } = router.query;
+  const videoId = Array.isArray(id) ? id[0] : id;
+  const [currentVideo, setCurrentVideo] = useState<any>(null);
+  const [allVideos, setAllVideos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-    useEffect(() => {
-      const fetchvideo = async () => {
-        if (!id || typeof id !== "string") return;
-        try {
-          const res = await axiosInstance.get("/video/getall");
-          const video = res.data?.filter((vid: any) => vid._id === id);
-          setvideo(video[0]);
-          setvide(res.data);
-        } catch (error) {
-          console.log(error);
-        } finally {
-          setloading(false);
+  useEffect(() => {
+    const fetchVideo = async () => {
+      if (!videoId || typeof videoId !== "string") return;
+
+      setLoading(true);
+      setNotFound(false);
+
+      try {
+        const res = await axiosInstance.get("/video/getall");
+        const list = res.data || [];
+        const match = list.find((vid: any) => vid._id === videoId);
+
+        if (!match) {
+          setNotFound(true);
+          setCurrentVideo(null);
+        } else {
+          setCurrentVideo(match);
         }
-      };
-      fetchvideo();
-    }, [id]);
+        setAllVideos(list);
+      } catch (error) {
+        console.error(error);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  //   const relatedVideos = [
-  //   {
-  //     _id: "1",
-  //     videotitle: "Amazing Nature Documentary",
-  //     filename: "nature-doc.mp4",
-  //     filetype: "video/mp4",
-  //     filepath: "/videos/nature-doc.mp4",
-  //     filesize: "500MB",
-  //     videochanel: "Nature Channel",
-  //     Like: 1250,
-  //     Dislike: 50,
-  //     views: 45000,
-  //     uploader: "nature_lover",
-  //     createdAt: new Date().toISOString(),
-  //   },
-  //   {
-  //     _id: "2",
-  //     videotitle: "Cooking Tutorial: Perfect Pasta",
-  //     filename: "pasta-tutorial.mp4",
-  //     filetype: "video/mp4",
-  //     filepath: "/videos/pasta-tutorial.mp4",
-  //     filesize: "300MB",
-  //     videochanel: "Chef's Kitchen",
-  //     Like: 890,
-  //     Dislike: 20,
-  //     views: 23000,
-  //     uploader: "chef_master",
-  //     createdAt: new Date(Date.now() - 86400000).toISOString(),
-  //   },
-  // ];
+    fetchVideo();
+  }, [videoId]);
 
-  if(loading){
-    return <div>loading...</div>
+  if (loading) {
+    return (
+      <main className="flex-1 p-3 sm:p-4 md:p-6">
+        <div className="max-w-7xl mx-auto animate-pulse space-y-4">
+          <div className="aspect-video bg-gray-200 rounded-lg" />
+          <div className="h-8 bg-gray-200 rounded w-2/3" />
+          <div className="h-24 bg-gray-200 rounded" />
+        </div>
+      </main>
+    );
   }
-  
-  if(!videos){
-    return <div>Video not Found</div>;
+
+  if (notFound || !currentVideo) {
+    return (
+      <main className="flex-1 p-3 sm:p-4 md:p-6">
+        <div className="max-w-7xl mx-auto text-center py-20 text-gray-600">
+          <p className="text-lg font-medium text-gray-900">Video not found</p>
+          <p className="text-sm mt-2">This video may have been removed or the link is incorrect.</p>
+        </div>
+      </main>
+    );
   }
+
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-                <Videoplayer video={videos} />
-                <Videoinfo video={videos} />
-                <Comments videoId={id} />
-            </div>
-            <div className='space-y-4'>
-              <h1>Related videos</h1>
-              <Relatedvideos videos={video} />
-            </div>
+    <main className="flex-1 min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4 min-w-0">
+            <Videoplayer video={currentVideo} />
+            <Videoinfo video={currentVideo} />
+            <Comments videoId={videoId} />
+          </div>
+          <aside className="space-y-3 sm:space-y-4 min-w-0 border-t lg:border-t-0 pt-4 lg:pt-0">
+            <h2 className="text-base font-semibold">Up next</h2>
+            <Relatedvideos videos={allVideos} currentVideoId={videoId} />
+          </aside>
         </div>
       </div>
-    </div>
-  )
-}
+    </main>
+  );
+};
 
-export default index
+export default WatchPage;
