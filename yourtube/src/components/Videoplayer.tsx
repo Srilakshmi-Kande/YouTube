@@ -117,7 +117,7 @@ const Videoplayer = ({video}: VideoPlayerProps) => {
         ref={videoRef}
         className='w-full h-full'
         controls
-        poster={`/placeholder.svg?height=480&width=854`}
+        poster="/images/video-placeholder.png"
         onTimeUpdate={handleTimeUpdate}
         onPlay={handlePlay}
       >

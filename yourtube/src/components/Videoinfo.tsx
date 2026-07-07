@@ -2,11 +2,12 @@ import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import React, { useEffect, useState } from 'react'
 import { Button } from './ui/button';
-import { Clock, Share, ThumbsDown, ThumbsUp } from 'lucide-react';
+import { Clock, Download, Share, ThumbsDown, ThumbsUp } from 'lucide-react';
 import { useUser } from '@/lib/AuthContext';
 import axiosInstance from '@/lib/axiosinstance';
 import Link from 'next/link';
 import { formatViewCount } from '@/lib/video';
+import { toast } from 'sonner';
 
 const Videoinfo = ({video}:any) => {
     const [likes,setLikes] = useState(video.Like || 0);
@@ -104,6 +105,52 @@ const Videoinfo = ({video}:any) => {
       }
     };
 
+    const handleDownload = async () => {
+      if (!user?._id) {
+        toast.error("Please sign in to download videos");
+        return;
+      }
+
+      try {
+        const response = await axiosInstance.post(
+          `/video/${video._id}/download`,
+          { userId: user._id },
+          { responseType: "blob" }
+        );
+
+        const contentType =
+          typeof response.headers?.["content-type"] === "string"
+            ? response.headers["content-type"]
+            : "video/mp4";
+        const blob = new Blob([response.data], { type: contentType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${video.videotitle || "video"}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success("Download started");
+      } catch (error: any) {
+        const data = error?.response?.data;
+        let message = "Download failed";
+
+        if (data instanceof Blob) {
+          try {
+            const parsed = JSON.parse(await data.text());
+            message = parsed.message || message;
+          } catch {
+            message = "Download failed";
+          }
+        } else if (typeof data === "object" && data?.message) {
+          message = data.message;
+        }
+
+        toast.error(message);
+      }
+    };
+
     //console.log(video)
 
   return (
@@ -164,6 +211,15 @@ const Videoinfo = ({video}:any) => {
           >
             <Clock className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-1" />
             <span className="text-xs sm:text-sm whitespace-nowrap">{isWatchLater ? "Saved" : "Save"}</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="bg-gray-100 rounded-full shrink-0"
+            onClick={handleDownload}
+          >
+            <Download className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-1" />
+            <span className="text-xs sm:text-sm">Download</span>
           </Button>
           <Button
             variant="ghost"

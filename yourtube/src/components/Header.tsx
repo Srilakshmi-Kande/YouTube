@@ -106,6 +106,9 @@ function Header() {
                                 <Link href="/watch-later">Watch later</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
+                                <Link href="/downloads">Downloads</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
                                 <Link href="/premium">Premium</Link>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />

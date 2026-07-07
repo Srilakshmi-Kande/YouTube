@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Clock, MoreVertical, Share } from "lucide-react";
+import { Clock, Download, MoreVertical, Share } from "lucide-react";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import React from "react";
 import VideoThumbnail from "./VideoThumbnail";
@@ -54,6 +54,54 @@ const Videocard = ({ video }: any) => {
       );
     } catch {
       toast.error("Could not update Watch later");
+    }
+  };
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user?._id) {
+      toast.error("Please sign in to download videos");
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post(
+        `/video/${video._id}/download`,
+        { userId: user._id },
+        { responseType: "blob" }
+      );
+
+      const contentType =
+        typeof response.headers?.["content-type"] === "string"
+          ? response.headers["content-type"]
+          : "video/mp4";
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${video.videotitle || "video"}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Download started");
+    } catch (error: any) {
+      const data = error?.response?.data;
+      let message = "Download failed";
+
+      if (data instanceof Blob) {
+        try {
+          const parsed = JSON.parse(await data.text());
+          message = parsed.message || message;
+        } catch {
+          message = "Download failed";
+        }
+      } else if (typeof data === "object" && data?.message) {
+        message = data.message;
+      }
+
+      toast.error(message);
     }
   };
 
@@ -118,6 +166,10 @@ const Videocard = ({ video }: any) => {
               <DropdownMenuItem onClick={handleWatchLater}>
                 <Clock className="w-4 h-4 mr-2" />
                 Watch later
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDownload}>
+                <Download className="w-4 h-4 mr-2" />
+                Download
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -131,7 +131,7 @@ const Premium = () => {
           <h1 className="text-2xl sm:text-3xl font-bold">Premium Plans</h1>
         </div>
         <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">
-          Upgrade your plan for longer watch time and more features.
+          Upgrade your plan for longer watch time, unlimited downloads, and more features.
           {user && (
             <span className="block sm:inline sm:ml-2 mt-1 sm:mt-0 font-medium text-gray-900">
               Current plan: {PLANS[currentPlan]?.name || "Free"}

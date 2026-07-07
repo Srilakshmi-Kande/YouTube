@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import React, { useState } from 'react'
 import { Button } from './ui/button'
-import { Clock, Compass, Crown, History, Home, PlaySquare, ThumbsUp, User, X } from 'lucide-react';
+import { Clock, Compass, Crown, Download, History, Home, PlaySquare, ThumbsUp, User, X } from 'lucide-react';
 import ChannelDialog from './ChannelDialog';
 import { useUser } from '@/lib/AuthContext';
 import { useLayout } from '@/lib/LayoutContext';
@@ -97,6 +97,12 @@ function Sidebar() {
                 <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/watch-later" ? "bg-gray-100" : ""}`}>
                   <Clock className="w-5 h-5 mr-3 shrink-0" />
                   Watch later
+                </Button>
+              ))}
+              {navLink("/downloads", (
+                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/downloads" ? "bg-gray-100" : ""}`}>
+                  <Download className="w-5 h-5 mr-3 shrink-0" />
+                  Downloads
                 </Button>
               ))}
               {user?.channelname ? (
