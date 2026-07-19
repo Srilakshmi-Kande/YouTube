@@ -85,7 +85,7 @@ const WatchPage = () => {
           <div className="lg:col-span-2 space-y-3 sm:space-y-4 min-w-0">
             <Videoplayer video={currentVideo} onNextVideo={handleNextVideo} />
             <Videoinfo video={currentVideo} />
-            <Comments videoId={videoId} />
+            <Comments videoId={videoId as string} />
           </div>
           <aside className="space-y-3 sm:space-y-4 min-w-0 border-t lg:border-t-0 pt-4 lg:pt-0">
             <h2 className="text-base font-semibold">Up next</h2>
