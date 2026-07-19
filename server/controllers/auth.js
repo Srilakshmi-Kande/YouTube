@@ -36,18 +36,20 @@ export const getuser = async (req, res) => {
 
 export const updateprofile = async (req,res) => {
     const {id : _id} = req.params;
-    const { channelname, description } = req.body;
+    const { channelname, description, city, state } = req.body;
     if(!mongoose.Types.ObjectId.isValid(_id)){
         return res.status(500).json({message: "User unavailable..."});
     }
     try{
+        const updates = {};
+        if (channelname !== undefined) updates.channelname = channelname;
+        if (description !== undefined) updates.description = description;
+        if (city !== undefined) updates.city = city;
+        if (state !== undefined) updates.state = state;
+
         const updatedata = await users.findByIdAndUpdate(
-            _id,{
-                $set:{
-                    channelname: channelname,
-                    description: description,
-                },
-            },
+            _id,
+            { $set: updates },
             {new: true}
         );
         return res.status(201).json(updatedata);

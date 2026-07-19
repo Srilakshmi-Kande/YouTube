@@ -16,6 +16,15 @@ const WatchPage = () => {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  const handleNextVideo = () => {
+    if (!allVideos.length || !videoId) return;
+
+    const related = allVideos.filter((video: any) => video._id !== videoId);
+    if (!related.length) return;
+
+    router.push(`/watch/${related[0]._id}`);
+  };
+
   useEffect(() => {
     const fetchVideo = async () => {
       if (!videoId || typeof videoId !== "string") return;
@@ -74,7 +83,7 @@ const WatchPage = () => {
       <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
           <div className="lg:col-span-2 space-y-3 sm:space-y-4 min-w-0">
-            <Videoplayer video={currentVideo} />
+            <Videoplayer video={currentVideo} onNextVideo={handleNextVideo} />
             <Videoinfo video={currentVideo} />
             <Comments videoId={videoId} />
           </div>
