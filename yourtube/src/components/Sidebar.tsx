@@ -39,7 +39,7 @@ function Sidebar() {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-64 max-w-[85vw] bg-white border-r
+          w-64 max-w-[85vw] bg-background border-r border-border
           min-h-[calc(100dvh-3.5rem)] lg:min-h-screen
           p-2 overflow-y-auto
           transition-transform duration-200 ease-in-out
@@ -55,7 +55,7 @@ function Sidebar() {
 
         <nav className="space-y-1">
           {navLink("/", (
-            <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/" ? "bg-gray-100" : ""}`}>
+            <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/" ? "bg-muted" : ""}`}>
               <Home className="w-5 h-5 mr-3 shrink-0" />
               Home
             </Button>
@@ -67,7 +67,7 @@ function Sidebar() {
             </Button>
           ))}
           {navLink("/premium", (
-            <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/premium" ? "bg-gray-100" : ""}`}>
+            <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/premium" ? "bg-muted" : ""}`}>
               <Crown className="w-5 h-5 mr-3 shrink-0 text-yellow-600" />
               Premium
             </Button>
@@ -82,32 +82,32 @@ function Sidebar() {
           {user && (
             <div className="border-t pt-2 mt-2">
               {navLink("/history", (
-                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/history" ? "bg-gray-100" : ""}`}>
+                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/history" ? "bg-muted" : ""}`}>
                   <History className="w-5 h-5 mr-3 shrink-0" />
                   History
                 </Button>
               ))}
               {navLink("/liked", (
-                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/liked" ? "bg-gray-100" : ""}`}>
+                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/liked" ? "bg-muted" : ""}`}>
                   <ThumbsUp className="w-5 h-5 mr-3 shrink-0" />
                   Liked videos
                 </Button>
               ))}
               {navLink("/watch-later", (
-                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/watch-later" ? "bg-gray-100" : ""}`}>
+                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/watch-later" ? "bg-muted" : ""}`}>
                   <Clock className="w-5 h-5 mr-3 shrink-0" />
                   Watch later
                 </Button>
               ))}
               {navLink("/downloads", (
-                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/downloads" ? "bg-gray-100" : ""}`}>
+                <Button variant="ghost" className={`w-full justify-start ${router.pathname === "/downloads" ? "bg-muted" : ""}`}>
                   <Download className="w-5 h-5 mr-3 shrink-0" />
                   Downloads
                 </Button>
               ))}
               {user?.channelname ? (
                 navLink(`/channel/${user._id}`, (
-                  <Button variant="ghost" className={`w-full justify-start ${router.pathname.startsWith("/channel") ? "bg-gray-100" : ""}`}>
+                  <Button variant="ghost" className={`w-full justify-start ${router.pathname.startsWith("/channel") ? "bg-muted" : ""}`}>
                     <User className="w-5 h-5 mr-3 shrink-0" />
                     Your channel
                   </Button>

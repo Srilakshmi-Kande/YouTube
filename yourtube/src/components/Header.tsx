@@ -28,7 +28,7 @@ function Header() {
 
   return (
     <>
-    <header className='sticky top-0 z-50 flex items-center justify-between gap-2 px-2 sm:px-4 py-2 bg-white border-b'>
+    <header className='sticky top-0 z-50 flex items-center justify-between gap-2 px-2 sm:px-4 py-2 bg-background border-b border-border'>
         <div className='flex items-center gap-1 sm:gap-3 shrink-0'>
             <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Toggle menu">
                 <Menu className='w-5 h-5 sm:w-6 sm:h-6' />
@@ -40,14 +40,14 @@ function Header() {
                     </svg>
                 </div>
                 <span className='text-base sm:text-xl font-medium'>Yourtube</span>
-                <span className='text-xs text-gray-400 ml-0.5 hidden sm:inline'>IN</span>
+                <span className='text-xs text-muted-foreground ml-0.5 hidden sm:inline'>IN</span>
             </Link>
         </div>
 
         <form onSubmit={handleSearch} className='hidden md:flex items-center gap-2 flex-1 max-w-xl mx-2 lg:mx-4'>
             <div className='flex flex-1'>
                 <Input type='search' placeholder='Search' value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} className='rounded-l-full border-r-0 focus-visible:ring-0' />
-                <Button type='submit' className="rounded-r-full px-4 lg:px-6 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-l-0">
+                <Button type='submit' className="rounded-r-full px-4 lg:px-6 bg-muted hover:bg-muted/80 text-muted-foreground border border-l-0">
                     <Search className='w-5 h-5' />
                 </Button>
             </div>
@@ -129,7 +129,7 @@ function Header() {
     </header>
 
     {mobileSearchOpen && (
-        <form onSubmit={handleSearch} className="md:hidden sticky top-14 z-40 flex items-center gap-2 px-3 py-2 bg-white border-b">
+        <form onSubmit={handleSearch} className="md:hidden sticky top-14 z-40 flex items-center gap-2 px-3 py-2 bg-background border-b border-border">
             <Input
                 type="search"
                 placeholder="Search"

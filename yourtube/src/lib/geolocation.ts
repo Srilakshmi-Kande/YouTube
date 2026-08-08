@@ -1,4 +1,9 @@
-export const detectUserCity = (): Promise<{ city: string; state?: string } | null> =>
+export interface UserLocation {
+  city?: string;
+  state?: string;
+}
+
+export const detectUserLocation = (): Promise<UserLocation | null> =>
   new Promise((resolve) => {
     if (!navigator.geolocation) {
       resolve(null);
@@ -22,7 +27,7 @@ export const detectUserCity = (): Promise<{ city: string; state?: string } | nul
             data.address?.state_district;
           const state = data.address?.state;
 
-          if (city) {
+          if (city || state) {
             resolve({ city, state });
           } else {
             resolve(null);
@@ -35,3 +40,25 @@ export const detectUserCity = (): Promise<{ city: string; state?: string } | nul
       { timeout: 10000, maximumAge: 600000 }
     );
   });
+
+export const detectUserCity = detectUserLocation;
+
+export const saveUserLocation = (location: UserLocation) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(
+    "userLocation",
+    JSON.stringify({ ...location, updatedAt: Date.now() })
+  );
+};
+
+export const getSavedUserLocation = (): UserLocation | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("userLocation");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return { city: parsed.city, state: parsed.state };
+  } catch {
+    return null;
+  }
+};

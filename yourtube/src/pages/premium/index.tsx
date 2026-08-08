@@ -155,14 +155,14 @@ const Premium = () => {
                       : "border-gray-200 bg-white"
                 }`}
               >
-                <h2 className="text-xl font-semibold">{plan.name}</h2>
-                <p className="text-3xl font-bold mt-2">
+                <h2 className="text-xl text-gray-700 font-semibold">{plan.name}</h2>
+                <p className="text-3xl text-gray-600 font-bold mt-2">
                   {plan.price === 0 ? "Free" : `₹${plan.price}`}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">{plan.description}</p>
-                <p className="text-sm font-medium mt-3">{formatWatchLimit(plan.id)}</p>
+                <p className="text-sm text-gray-600 font-medium mt-3">{formatWatchLimit(plan.id)}</p>
 
-                <ul className="mt-4 space-y-2 text-sm flex-1">
+                <ul className="mt-4 space-y-2 text-gray-600 text-sm flex-1">
                   <li className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-600" />
                     {formatWatchLimit(plan.id)} watching
@@ -181,7 +181,7 @@ const Premium = () => {
                       Current plan
                     </Button>
                   ) : plan.id === "free" ? (
-                    <Button variant="outline" className="w-full" disabled>
+                    <Button variant="default" className="w-full" disabled>
                       Default plan
                     </Button>
                   ) : (
