@@ -69,7 +69,13 @@ function Header() {
 
             {user ? (
                 <>
-                    <Button variant="ghost" size='icon' className="hidden sm:inline-flex">
+                    <Button
+                        variant="ghost"
+                        size='icon'
+                        className="hidden sm:inline-flex"
+                        onClick={() => router.push('/call')}
+                        aria-label="Start a video call"
+                    >
                         <VideoIcon className='w-5 h-5 sm:w-6 sm:h-6' />
                     </Button>
                     <Button variant="ghost" size='icon' className="hidden sm:inline-flex">

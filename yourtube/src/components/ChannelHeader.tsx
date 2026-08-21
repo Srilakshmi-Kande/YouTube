@@ -14,7 +14,7 @@ const ChannelHeader = ({channel, user}:any) => {
             </Avatar>
 
             <div className='flex-1 space-y-2 min-w-0'>
-                <h1 className='text-xl sm:text-2xl md:text-4xl font-bold break-words'>{channel?.channelname}</h1>
+                <h1 className='text-xl sm:text-2xl md:text-4xl font-bold text-gray-800 break-words'>{channel?.channelname}</h1>
                 <div className='flex flex-wrap gap-4 text-sm text-gray-600'>
                     <span>@{channel?.channelname?.toLowerCase().replace(/\s+/g,"") || "channel"}</span>
                 </div>
