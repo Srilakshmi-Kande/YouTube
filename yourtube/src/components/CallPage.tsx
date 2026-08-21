@@ -17,8 +17,10 @@ export default function CallPage() {
   const [roomId, setRoomId] = useState<string>('test-room');
   const [recording, setRecording] = useState<boolean>(false);
   const [inCall, setInCall] = useState<boolean>(false);
+  const [callStatus, setCallStatus] = useState<string>('Ready to join');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
 
   useEffect(() => {
     const room = router.query.room;
@@ -39,8 +41,18 @@ export default function CallPage() {
   }
 
   async function createPeerConnection(socket: Socket) {
+    const iceServers: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
+    const turnUrl = process.env.NEXT_PUBLIC_TURN_URL;
+    if (turnUrl) {
+      iceServers.push({
+        urls: turnUrl,
+        username: process.env.NEXT_PUBLIC_TURN_USERNAME,
+        credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+      });
+    }
+
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+      iceServers,
     });
 
     pc.onicecandidate = (e) => {
@@ -50,7 +62,16 @@ export default function CallPage() {
     };
 
     pc.ontrack = (e) => {
-      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
+      if (remoteVideoRef.current && e.streams[0]) {
+        remoteVideoRef.current.srcObject = e.streams[0];
+        void remoteVideoRef.current.play().catch(() => undefined);
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === 'connected') setCallStatus('Connected');
+      if (pc.connectionState === 'connecting') setCallStatus('Connecting media...');
+      if (pc.connectionState === 'failed') setCallStatus('Media connection failed. A TURN server may be required.');
     };
 
     // add local tracks
@@ -65,7 +86,13 @@ export default function CallPage() {
   }
 
   async function joinRoom() {
-    await startLocalStream();
+    try {
+      setCallStatus('Requesting camera and microphone...');
+      await startLocalStream();
+    } catch {
+      setCallStatus('Camera and microphone permission is required.');
+      return;
+    }
     const socket = io(SERVER_URL);
     socketRef.current = socket;
 
@@ -73,6 +100,7 @@ export default function CallPage() {
     setInCall(true);
 
     socket.emit('join-room', roomId);
+    setCallStatus('Waiting for your friend...');
 
     socket.on('user-joined', async ({ id }) => {
       // create offer
@@ -83,6 +111,10 @@ export default function CallPage() {
 
     socket.on('offer', async ({ sdp, from }) => {
       await pc.setRemoteDescription(sdp);
+      for (const candidate of pendingCandidatesRef.current) {
+        await pc.addIceCandidate(candidate);
+      }
+      pendingCandidatesRef.current = [];
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit('answer', { room: roomId, sdp: answer });
@@ -90,15 +122,25 @@ export default function CallPage() {
 
     socket.on('answer', async ({ sdp, from }) => {
       await pc.setRemoteDescription(sdp);
+      for (const candidate of pendingCandidatesRef.current) {
+        await pc.addIceCandidate(candidate);
+      }
+      pendingCandidatesRef.current = [];
     });
 
     socket.on('ice-candidate', async ({ candidate }) => {
       try {
-        await pc.addIceCandidate(candidate);
+        if (pc.remoteDescription) {
+          await pc.addIceCandidate(candidate);
+        } else {
+          pendingCandidatesRef.current.push(candidate);
+        }
       } catch (err) {
         console.warn('Failed to add ICE candidate', err);
       }
     });
+
+    socket.on('connect_error', () => setCallStatus('Could not connect to the call server.'));
   }
 
   async function startScreenShare() {
@@ -186,6 +228,8 @@ export default function CallPage() {
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     setInCall(false);
+    setCallStatus('Ready to join');
+    pendingCandidatesRef.current = [];
   }
 
   return (

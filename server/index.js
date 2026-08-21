@@ -39,13 +39,12 @@ app.use('/payment', paymentroutes);
 app.use('/watchtime', watchtimeroutes);
 
 const PORT = process.env.PORT || 5000;
+const frontendOrigin = process.env.FRONTEND_URL || true;
 
 // Create HTTP server and attach Socket.IO for WebRTC signaling
 const httpServer = createServer(app);
 const io = new IOServer(httpServer, {
-    cors: { 
-        origin: "http://localhost:3000", 
-    },
+    cors: { origin: frontendOrigin },
 });
 
 io.on('connection', (socket) => {

@@ -22,6 +22,7 @@ export const UserProvider = ({ children }) => {
   const [otpChannel, setOtpChannel] = useState("email");
   const [showOtpDialog, setShowOtpDialog] = useState(false);
   const authFlowRef = useRef(false);
+  const signInPopupRef = useRef(false);
 
   const login = (userdata) => {
     setUser(userdata);
@@ -105,11 +106,18 @@ export const UserProvider = ({ children }) => {
   };
 
   const handlegooglesignin = async () => {
+    if (signInPopupRef.current) return;
+    signInPopupRef.current = true;
+
     try {
       const result = await signInWithPopup(auth, provider);
       await completeAuthentication(result.user);
     } catch (error) {
-      console.error(error);
+      if (error?.code !== "auth/cancelled-popup-request" && error?.code !== "auth/popup-closed-by-user") {
+        console.error(error);
+      }
+    } finally {
+      signInPopupRef.current = false;
     }
   };
 
