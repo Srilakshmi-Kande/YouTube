@@ -55,6 +55,33 @@ export default function CallPage() {
       iceServers,
     });
 
+    console.log("Creating PeerConnection:", socket.id);
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(
+        "ICE connection state:",
+        pc.iceConnectionState
+      );
+    };
+
+    pc.onicegatheringstatechange = () => {
+      console.log(
+        "ICE gathering state:",
+        pc.iceGatheringState
+      );
+    };
+
+    pc.onsignalingstatechange = () => {
+      console.log(
+        "Signaling state:",
+        pc.signalingState
+      );
+    };
+
+    pc.onicecandidateerror = (event) => {
+      console.error("ICE candidate error:", event);
+    };
+
     pc.onicecandidate = (e) => {
       if (e.candidate) {
         socket.emit('ice-candidate', { room: roomId, candidate: e.candidate });
@@ -62,21 +89,65 @@ export default function CallPage() {
     };
 
     pc.ontrack = (e) => {
+      console.log("🔥 REMOTE TRACK RECEIVED");
+      console.log("Track:", e.track);
+      console.log("Streams:", e.streams);
+
       if (remoteVideoRef.current && e.streams[0]) {
+        console.log("🔥 Setting remote video stream");
+
         remoteVideoRef.current.srcObject = e.streams[0];
-        void remoteVideoRef.current.play().catch(() => undefined);
+
+        void remoteVideoRef.current.play().catch((err) => {
+          console.error("Remote video play failed:", err);
+        });
       }
     };
 
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') setCallStatus('Connected');
-      if (pc.connectionState === 'connecting') setCallStatus('Connecting media...');
-      if (pc.connectionState === 'failed') setCallStatus('Media connection failed. A TURN server may be required.');
+      console.log(
+        "Connection state:",
+        pc.connectionState
+      );
+
+      if (pc.connectionState === "connected") {
+        setCallStatus("Connected");
+      }
+
+      if (pc.connectionState === "connecting") {
+        setCallStatus("Connecting media...");
+      }
+
+      if (pc.connectionState === "failed") {
+        setCallStatus(
+          "Media connection failed. A TURN server may be required."
+        );
+      }
+
+      if (pc.connectionState === "disconnected") {
+        setCallStatus("Media disconnected.");
+      }
+
+      if (pc.connectionState === "closed") {
+        setCallStatus("Connection closed.");
+      }
     };
 
     // add local tracks
+    // add local tracks
     if (localStreamRef.current) {
+      console.log(
+        "🔥 LOCAL STREAM TRACKS:",
+        localStreamRef.current.getTracks()
+      );
+
       for (const track of localStreamRef.current.getTracks()) {
+        console.log(
+          "Adding local track:",
+          track.kind,
+          track.id
+        );
+
         pc.addTrack(track, localStreamRef.current);
       }
     }
@@ -96,47 +167,110 @@ export default function CallPage() {
     const socket = io(SERVER_URL);
     socketRef.current = socket;
 
-    const pc = await createPeerConnection(socket);
-    setInCall(true);
+    socket.on('connect', () => {
+      console.log("🟢 SOCKET CONNECTED:", socket.id);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error("🔴 SOCKET CONNECTION ERROR:", error);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log("🟠 SOCKET DISCONNECTED:", reason);
+    });
+
+const pc = await createPeerConnection(socket);
+setInCall(true);
 
     socket.emit('join-room', roomId);
     setCallStatus('Waiting for your friend...');
 
     socket.on('user-joined', async ({ id }) => {
-      // create offer
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('offer', { room: roomId, sdp: offer });
+      console.log("🔥 USER JOINED:", id);
+
+      try {
+        const offer = await pc.createOffer();
+
+        console.log("Created offer:", offer);
+
+        await pc.setLocalDescription(offer);
+
+        console.log("Local description set:", pc.localDescription);
+
+        socket.emit('offer', {
+          room: roomId,
+          sdp: offer
+        });
+
+        console.log("🔥 OFFER SENT");
+      } catch (error) {
+        console.error("❌ Error creating/sending offer:", error);
+      }
     });
 
     socket.on('offer', async ({ sdp, from }) => {
-      await pc.setRemoteDescription(sdp);
-      for (const candidate of pendingCandidatesRef.current) {
-        await pc.addIceCandidate(candidate);
+      console.log("🔥 OFFER RECEIVED FROM:", from);
+      console.log("SDP:", sdp);
+
+      try {
+        await pc.setRemoteDescription(sdp);
+
+        console.log("🔥 Remote description set from offer");
+
+        for (const candidate of pendingCandidatesRef.current) {
+          await pc.addIceCandidate(candidate);
+        }
+
+        pendingCandidatesRef.current = [];
+
+        const answer = await pc.createAnswer();
+
+        console.log("Created answer:", answer);
+
+        await pc.setLocalDescription(answer);
+
+        socket.emit('answer', {
+          room: roomId,
+          sdp: answer
+        });
+
+        console.log("🔥 ANSWER SENT");
+      } catch (error) {
+        console.error("❌ Error handling offer:", error);
       }
-      pendingCandidatesRef.current = [];
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('answer', { room: roomId, sdp: answer });
     });
 
     socket.on('answer', async ({ sdp, from }) => {
-      await pc.setRemoteDescription(sdp);
-      for (const candidate of pendingCandidatesRef.current) {
-        await pc.addIceCandidate(candidate);
+      console.log("🔥 ANSWER RECEIVED FROM:", from);
+
+      try {
+        await pc.setRemoteDescription(sdp);
+
+        console.log("🔥 Remote description set from answer");
+
+        for (const candidate of pendingCandidatesRef.current) {
+          await pc.addIceCandidate(candidate);
+        }
+
+        pendingCandidatesRef.current = [];
+      } catch (error) {
+        console.error("❌ Error handling answer:", error);
       }
-      pendingCandidatesRef.current = [];
     });
 
-    socket.on('ice-candidate', async ({ candidate }) => {
+    socket.on('ice-candidate', async ({ candidate, from }) => {
+      console.log("🧊 ICE CANDIDATE RECEIVED FROM:", from);
+
       try {
         if (pc.remoteDescription) {
           await pc.addIceCandidate(candidate);
+          console.log("🧊 ICE candidate added");
         } else {
+          console.log("🧊 ICE candidate queued");
           pendingCandidatesRef.current.push(candidate);
         }
       } catch (err) {
-        console.warn('Failed to add ICE candidate', err);
+        console.error("❌ Failed to add ICE candidate:", err);
       }
     });
 

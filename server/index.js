@@ -39,32 +39,72 @@ app.use('/payment', paymentroutes);
 app.use('/watchtime', watchtimeroutes);
 
 const PORT = process.env.PORT || 5000;
-const frontendOrigin = process.env.FRONTEND_URL || true;
 
-// Create HTTP server and attach Socket.IO for WebRTC signaling
 const httpServer = createServer(app);
+
 const io = new IOServer(httpServer, {
-    cors: { origin: frontendOrigin },
+    cors: {
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"],
+    },
 });
 
 io.on('connection', (socket) => {
-    console.log('socket connected', socket.id);
+    console.log('🟢 SOCKET CONNECTED:', socket.id);
 
     socket.on('join-room', (room) => {
+        console.log("🔥 JOIN ROOM");
+        console.log("Socket:", socket.id);
+        console.log("Room:", room);
+
+        const roomBefore = io.sockets.adapter.rooms.get(room);
+
+        console.log(
+            "Users already in room:",
+            roomBefore ? roomBefore.size : 0
+        );
+
         socket.join(room);
-        socket.to(room).emit('user-joined', { id: socket.id });
+
+        const roomAfter = io.sockets.adapter.rooms.get(room);
+
+        console.log(
+            "Users after joining:",
+            roomAfter ? roomAfter.size : 0
+        );
+
+        socket.to(room).emit('user-joined', {
+            id: socket.id
+        });
     });
 
     socket.on('offer', ({ room, sdp }) => {
-        socket.to(room).emit('offer', { sdp, from: socket.id });
+        console.log("🔥 OFFER from:", socket.id);
+        console.log("Room:", room);
+
+        socket.to(room).emit('offer', {
+            sdp,
+            from: socket.id
+        });
     });
 
     socket.on('answer', ({ room, sdp }) => {
-        socket.to(room).emit('answer', { sdp, from: socket.id });
+        console.log("🔥 ANSWER from:", socket.id);
+        console.log("Room:", room);
+
+        socket.to(room).emit('answer', {
+            sdp,
+            from: socket.id
+        });
     });
 
     socket.on('ice-candidate', ({ room, candidate }) => {
-        socket.to(room).emit('ice-candidate', { candidate, from: socket.id });
+        console.log("🧊 ICE from:", socket.id);
+
+        socket.to(room).emit('ice-candidate', {
+            candidate,
+            from: socket.id
+        });
     });
 
     socket.on('leave-room', (room) => {
