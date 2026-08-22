@@ -79,7 +79,10 @@ export default function CallPage() {
     };
 
     pc.onicecandidateerror = (event) => {
-      console.error("ICE candidate error:", event);
+      console.error("❌ ICE CANDIDATE ERROR");
+      console.error("Error code:", event.errorCode);
+      console.error("Error text:", event.errorText);
+      console.error("ICE server URL:", event.url);
     };
 
     pc.onicecandidate = (e) => {

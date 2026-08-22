@@ -38,14 +38,17 @@ app.use('/comment',commentroutes);
 app.use('/payment', paymentroutes);
 app.use('/watchtime', watchtimeroutes);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000; 
 
 const httpServer = createServer(app);
 
+const frontendOrigin = process.env.FRONTEND_URL;
+
 const io = new IOServer(httpServer, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: frontendOrigin,
         methods: ["GET", "POST"],
+        credentials: true,
     },
 });
 
