@@ -1,24 +1,9 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { getPlanDetails } from "./plans.js";
 
-const createTransporter = () => {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
-    return null;
-  }
-
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendPlanInvoiceEmail = async ({ email, name, planId, paymentId, amount }) => {
-  const transporter = createTransporter();
   const plan = getPlanDetails(planId);
   const purchasedAt = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
@@ -38,45 +23,62 @@ export const sendPlanInvoiceEmail = async ({ email, name, planId, paymentId, amo
     </div>
   `;
 
-  if (!transporter) {
-    console.log("[mailer] SMTP not configured — invoice email skipped for", email);
-    return { sent: false, reason: "SMTP not configured" };
-  }
-
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-    to: email,
+  const { data, error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM || "Yourtube <onboarding@resend.dev>",
+    to: [email],
     subject: `Yourtube invoice — ${plan.name} plan`,
     html,
   });
+
+  if (error) {
+    console.error("[Resend] Invoice email failed:", error);
+    throw new Error(error.message || "Failed to send invoice email");
+  }
+
+  console.log("[Resend] Invoice email sent:", data?.id);
 
   return { sent: true };
 };
 
 export const sendOtpEmail = async ({ email, otp, name }) => {
-  const transporter = createTransporter();
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
-      <h2 style="color: #dc2626;">Yourtube — Login verification</h2>
-      <p>Hi ${name || "there"},</p>
-      <p>Your one-time password for signing in is:</p>
-      <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px;">${otp}</p>
-      <p style="color: #666;">This code expires in 10 minutes. Do not share it with anyone.</p>
-    </div>
-  `;
-
-  if (!transporter) {
-    console.log(`[mailer] OTP for ${email}: ${otp}`);
-    return { sent: false, reason: "SMTP not configured", devOtp: otp };
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured");
   }
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-    to: email,
+  const { data, error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM || "Yourtube <onboarding@resend.dev>",
+    to: [email],
     subject: "Yourtube login OTP",
-    html,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
+        <h2 style="color: #dc2626;">Yourtube — Login verification</h2>
+
+        <p>Hi ${name || "there"},</p>
+
+        <p>Your one-time password for signing in is:</p>
+
+        <p style="
+          font-size: 28px;
+          font-weight: bold;
+          letter-spacing: 4px;
+        ">
+          ${otp}
+        </p>
+
+        <p style="color: #666;">
+          This code expires in 10 minutes.
+          Do not share it with anyone.
+        </p>
+      </div>
+    `,
   });
+
+  if (error) {
+    console.error("[Resend] Email failed:", error);
+    throw new Error(error.message || "Failed to send OTP email");
+  }
+
+  console.log("[Resend] OTP email sent:", data?.id);
 
   return { sent: true };
 };
