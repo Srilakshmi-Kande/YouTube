@@ -1,7 +1,25 @@
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import { Resend } from "resend";
 import { getPlanDetails } from "./plans.js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({
+  path: path.resolve(__dirname, "../.env"),
+});
+
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+
+  return new Resend(process.env.RESEND_API_KEY);
+};
+
+const resend = getResend();
 
 export const sendPlanInvoiceEmail = async ({ email, name, planId, paymentId, amount }) => {
   const plan = getPlanDetails(planId);

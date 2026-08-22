@@ -1,6 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+
+dotenv.config()
+console.log(
+  "Resend API key loaded:",
+  process.env.RESEND_API_KEY ? "YES" : "NO"
+);
+
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import { createServer } from 'http';
@@ -14,7 +21,6 @@ import commentroutes from './routes/comment.js';
 import paymentroutes from './routes/payment.js';
 import watchtimeroutes from './routes/watchTime.js';
 
-dotenv.config()
 const app = express();
 
 import path from 'path';
