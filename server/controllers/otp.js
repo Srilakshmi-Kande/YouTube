@@ -55,7 +55,6 @@ export const sendOtp = async (req, res) => {
         channel === "email"
           ? "OTP sent to your registered email"
           : "OTP sent to your registered mobile number",
-      devOtp: delivery.devOtp,
     });
   } catch (error) {
     console.error("sendOtp error:", error);
