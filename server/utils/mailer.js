@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Resend } from "resend";
+import { BrevoClient } from "@getbrevo/brevo";
 import { getPlanDetails } from "./plans.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,63 +11,125 @@ dotenv.config({
   path: path.resolve(__dirname, "../.env"),
 });
 
-const getResend = () => {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is not configured");
+
+const getBrevoClient = () => {
+  if (!process.env.BREVO_API_KEY) {
+    throw new Error("BREVO_API_KEY is not configured");
   }
 
-  return new Resend(process.env.RESEND_API_KEY);
+  return new BrevoClient({
+    apiKey: process.env.BREVO_API_KEY,
+  });
 };
 
-const resend = getResend();
-
-export const sendPlanInvoiceEmail = async ({ email, name, planId, paymentId, amount }) => {
+export const sendPlanInvoiceEmail = async ({
+  email,
+  name,
+  planId,
+  paymentId,
+  amount,
+}) => {
   const plan = getPlanDetails(planId);
-  const purchasedAt = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
 
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
-      <h2 style="color: #dc2626;">Yourtube — Payment Confirmation</h2>
-      <p>Hi ${name || "there"},</p>
-      <p>Thank you for upgrading your plan. Your payment was successful.</p>
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <tr><td style="padding: 8px 0; color: #666;">Plan</td><td style="padding: 8px 0;"><strong>${plan.name}</strong></td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Amount</td><td style="padding: 8px 0;"><strong>₹${amount}</strong></td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Payment ID</td><td style="padding: 8px 0;">${paymentId}</td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Date</td><td style="padding: 8px 0;">${purchasedAt}</td></tr>
-      </table>
-      <p style="color: #666;">${plan.description}</p>
-      <p>Enjoy your upgraded experience on Yourtube!</p>
-    </div>
-  `;
-
-  const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Yourtube <onboarding@resend.dev>",
-    to: [email],
-    subject: `Yourtube invoice — ${plan.name} plan`,
-    html,
+  const purchasedAt = new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
   });
 
-  if (error) {
-    console.error("[Resend] Invoice email failed:", error);
-    throw new Error(error.message || "Failed to send invoice email");
-  }
+  const brevo = getBrevoClient();
 
-  console.log("[Resend] Invoice email sent:", data?.id);
+  const result = await brevo.transactionalEmails.sendTransacEmail({
+    sender: {
+      name: "Yourtube",
+      email: process.env.EMAIL_FROM,
+    },
+
+    to: [
+      {
+        email,
+        name: name || "User",
+      },
+    ],
+
+    subject: `Yourtube invoice — ${plan.name} plan`,
+
+    htmlContent: `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
+        <h2 style="color: #dc2626;">
+          Yourtube — Payment Confirmation
+        </h2>
+
+        <p>Hi ${name || "there"},</p>
+
+        <p>
+          Thank you for upgrading your plan.
+          Your payment was successful.
+        </p>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Plan</td>
+            <td style="padding: 8px 0;">
+              <strong>${plan.name}</strong>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Amount</td>
+            <td style="padding: 8px 0;">
+              <strong>₹${amount}</strong>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Payment ID</td>
+            <td style="padding: 8px 0;">
+              ${paymentId}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 8px 0; color: #666;">Date</td>
+            <td style="padding: 8px 0;">
+              ${purchasedAt}
+            </td>
+          </tr>
+        </table>
+
+        <p style="color: #666;">
+          ${plan.description}
+        </p>
+
+        <p>
+          Enjoy your upgraded experience on Yourtube!
+        </p>
+      </div>
+    `,
+  });
+
+  console.log("[Brevo] Invoice email sent:", result);
 
   return { sent: true };
 };
 
 export const sendOtpEmail = async ({ email, otp, name }) => {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is not configured");
-  }
+  const brevo = getBrevoClient();
 
-  const { data, error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM || "Yourtube <onboarding@resend.dev>",
-    to: [email],
+  const result = await brevo.transactionalEmails.sendTransacEmail({
+    sender: {
+      name: "Yourtube",
+      email: process.env.EMAIL_FROM,
+    },
+
+    to: [
+      {
+        email,
+        name: name || "User",
+      },
+    ],
+
     subject: "Yourtube login OTP",
-    html: `
+
+    htmlContent: `
       <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto;">
         <h2 style="color: #dc2626;">Yourtube — Login verification</h2>
 
@@ -91,12 +153,7 @@ export const sendOtpEmail = async ({ email, otp, name }) => {
     `,
   });
 
-  if (error) {
-    console.error("[Resend] Email failed:", error);
-    throw new Error(error.message || "Failed to send OTP email");
-  }
-
-  console.log("[Resend] OTP email sent:", data?.id);
+  console.log("[Brevo] OTP email sent:", result);
 
   return { sent: true };
 };
